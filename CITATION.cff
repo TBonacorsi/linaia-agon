@@ -1,0 +1,63 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata below."
+
+title: "Linaia-Agon: Real-Time Musical Tactic Classification System"
+abstract: >
+  Automated referee system for Iannis Xenakis's Linaia-Agon (1972).
+  Classifies musical tactics in real time via FFT and normalised Euclidean
+  distance across two independent audio channels, calculates payoffs according
+  to the composer's matrices, and displays results through a live HTML interface.
+  The system connects SuperCollider (game engine), Python (classifier + HTTP server)
+  and a browser interface via OSC and HTTP polling.
+
+authors:
+  - family-names: "Bonacorsi Xavier"
+    given-names: "Thayná A."
+    orcid: "https://orcid.org/0009-0008-1108-252X"
+    affiliation: "Universidade de São Paulo, Brasil / Université Paris 8 Vincennes – Saint-Denis, France"
+    email: "bonacorsithayna@gmail.com"
+
+version: "1.0.0"
+date-released: "2026-06-26"
+license: MIT
+
+repository-code: "https://github.com/SEU_USUARIO/linaia-agon"
+doi: "10.5281/zenodo.XXXXXXX"
+
+keywords:
+  - real-time music classification
+  - Xenakis
+  - Linaia-Agon
+  - game theory in music
+  - FFT
+  - Euclidean distance classifier
+  - SuperCollider
+  - computer music
+  - music information retrieval
+  - live performance
+
+references:
+  - type: article
+    title: "Linaia-Agon: Système de classification de texture musicale pour la performance en temps réel"
+    authors:
+      - family-names: "Bonacorsi Xavier"
+        given-names: "Thayná A."
+    year: 2026
+    notes: "Submitted for publication"
+
+  - type: book
+    title: "Formalized Music: Thought and Mathematics in Composition"
+    authors:
+      - family-names: "Xenakis"
+        given-names: "Iannis"
+    publisher: "Pendragon Press"
+    year: 1992
+    edition: "revised"
+
+  - type: software
+    title: "Linaia-Agon (score)"
+    authors:
+      - family-names: "Xenakis"
+        given-names: "Iannis"
+    publisher: "Éditions Salabert"
+    year: 1972
