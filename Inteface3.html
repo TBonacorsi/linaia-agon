@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Linaia-Agon · Batalha</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#050505;--bg2:#0c0c0c;--bg3:#141414;
+  --line:rgba(255,255,255,0.06);--line2:rgba(255,255,255,0.12);
+  --dim:rgba(255,255,255,0.32);--mid:rgba(255,255,255,0.65);--bright:rgba(255,255,255,0.94);
+  --linos:#c87840;--linos-d:rgba(200,120,64,0.12);--linos-b:rgba(200,120,64,0.3);
+  --apollo:#4880c8;--apollo-d:rgba(72,128,200,0.12);--apollo-b:rgba(72,128,200,0.3);
+  --t1:#c84040;--t1d:rgba(200,64,64,0.15);
+  --t2:#40a850;--t2d:rgba(64,168,80,0.15);
+  --t3:#c8a800;--t3d:rgba(200,168,0,0.15);
+  --t4:#d0d0d0;--t4d:rgba(208,208,208,0.10);
+  --ok:#40a850;--warn:#c8a800;--err:#c84040;
+  --mono:'DM Mono',monospace;--serif:'Cormorant Garamond',serif;
+}
+body{background:var(--bg);color:var(--bright);font-family:var(--mono);min-height:100vh}
+.root{max-width:1100px;margin:0 auto;padding:1rem 1.2rem}
+
+.header{text-align:center;margin-bottom:1.2rem}
+.header h1{font-family:var(--serif);font-style:italic;font-size:1.7rem;font-weight:400}
+.header p{font-size:9px;color:var(--dim);letter-spacing:0.2em;text-transform:uppercase;margin-top:3px}
+
+/* CONNECTION STATUS */
+.conn-bar{display:flex;align-items:center;gap:8px;padding:6px 14px;
+  background:var(--bg2);border:0.5px solid var(--line2);border-radius:20px;
+  font-size:9px;margin-bottom:1rem;width:fit-content;margin-left:auto;margin-right:auto}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:var(--dim);flex-shrink:0}
+.conn-dot.ok{background:var(--ok)}
+.conn-dot.err{background:var(--err);animation:blink 1s infinite}
+.conn-text{color:var(--dim)}
+
+/* SETUP */
+.setup{background:var(--bg2);border:0.5px solid var(--line2);border-radius:16px;padding:1.4rem;margin-bottom:1rem}
+.setup-title{font-size:9px;letter-spacing:0.2em;color:var(--dim);text-transform:uppercase;margin-bottom:1rem}
+.setup-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem}
+.setup-label{font-size:10px;color:var(--dim);display:block;margin-bottom:5px}
+.setup-select{background:var(--bg3);border:0.5px solid var(--line2);border-radius:8px;
+  color:var(--bright);font-family:var(--mono);font-size:11px;padding:8px 10px;width:100%;cursor:pointer}
+.start-btn{width:100%;padding:11px;background:transparent;border:0.5px solid var(--line2);
+  border-radius:40px;color:var(--mid);font-family:var(--mono);font-size:11px;
+  letter-spacing:0.1em;cursor:pointer;transition:all .15s}
+.start-btn:hover{border-color:var(--bright);color:var(--bright)}
+.start-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ALPHA TEST PANEL */
+.test-panel{background:var(--bg2);border:0.5px solid rgba(200,168,0,0.3);
+  border-radius:16px;padding:1.4rem;margin-bottom:1rem}
+.test-title{font-size:9px;letter-spacing:0.2em;color:var(--warn);text-transform:uppercase;margin-bottom:1rem}
+.test-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem}
+.feat-row{display:flex;flex-direction:column;gap:4px}
+.feat-label{font-size:9px;color:var(--dim)}
+.feat-bar-track{background:var(--bg3);border-radius:4px;height:6px;overflow:hidden}
+.feat-bar-fill{height:100%;border-radius:4px;transition:width .3s}
+.feat-val{font-size:10px;font-variant-numeric:tabular-nums;color:var(--mid)}
+.tactic-live{text-align:center;padding:1rem;background:var(--bg3);
+  border-radius:12px;border:1px solid transparent;transition:all .3s}
+.tactic-live.t1{background:var(--t1d);border-color:rgba(200,64,64,.4)}
+.tactic-live.t2{background:var(--t2d);border-color:rgba(64,168,80,.4)}
+.tactic-live.t3{background:var(--t3d);border-color:rgba(200,168,0,.4)}
+.tactic-live.t4{background:var(--t4d);border-color:rgba(200,200,200,.2)}
+.tl-roman{font-family:var(--serif);font-style:italic;font-size:3rem;line-height:1}
+.tl-name{font-size:10px;color:var(--mid);margin-top:4px}
+.tl-conf{font-size:9px;color:var(--dim)}
+.hist-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.hist-pip{width:22px;height:22px;border-radius:4px;display:flex;align-items:center;
+  justify-content:center;font-size:10px;font-family:var(--serif);font-style:italic}
+.hist-pip.t1{background:var(--t1d);color:var(--t1)}
+.hist-pip.t2{background:var(--t2d);color:var(--t2)}
+.hist-pip.t3{background:var(--t3d);color:var(--t3)}
+.hist-pip.t4{background:var(--t4d);color:var(--t4)}
+
+/* ARENA */
+.arena{display:none}
+.arena.active{display:block}
+
+.battle-header{display:grid;grid-template-columns:1fr auto 1fr;
+  align-items:center;gap:12px;margin-bottom:1rem}
+.battle-name-pill{background:var(--bg3);border:0.5px solid var(--line2);
+  border-radius:20px;padding:5px 18px;font-size:11px;letter-spacing:0.12em;
+  color:var(--mid);text-align:center}
+.score-side{display:flex;flex-direction:column;gap:1px}
+.score-side.right{align-items:flex-end}
+.score-player{font-size:9px;letter-spacing:0.14em;color:var(--dim);text-transform:uppercase}
+.score-num{font-family:var(--serif);font-style:italic;font-size:2.6rem;line-height:1;transition:all .3s}
+.score-num.linos{color:var(--linos)}
+.score-num.apollo{color:var(--apollo)}
+
+.prog-wrap{margin-bottom:1.2rem}
+.prog-meta{display:flex;justify-content:space-between;font-size:9px;color:var(--dim);margin-bottom:5px}
+.prog-track{background:var(--bg3);border-radius:8px;height:5px;overflow:hidden}
+.prog-fill{height:100%;border-radius:8px;
+  background:linear-gradient(90deg,var(--linos),var(--apollo));
+  width:0%;transition:width .3s linear}
+
+.dual{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1rem}
+.player-col{background:var(--bg2);border:0.5px solid var(--line2);border-radius:20px;padding:1.1rem}
+.player-col.linos-col{border-color:var(--linos-b)}
+.player-col.apollo-col{border-color:var(--apollo-b)}
+.col-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.col-name{font-family:var(--serif);font-style:italic;font-size:1.1rem}
+.col-name.linos{color:var(--linos)}
+.col-name.apollo{color:var(--apollo)}
+.col-score{font-family:var(--serif);font-style:italic;font-size:1.8rem}
+
+.listen-indicator{display:flex;align-items:center;gap:6px;
+  font-size:9px;letter-spacing:0.1em;color:var(--dim);margin-bottom:10px;text-transform:uppercase}
+.listen-dot{width:7px;height:7px;border-radius:50%;background:var(--dim);flex-shrink:0}
+.listen-dot.active{background:var(--ok);animation:blink 1s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+.tactic-card{border-radius:14px;padding:1.2rem 1rem;text-align:center;
+  border:1px solid transparent;transition:all .4s;min-height:110px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.tactic-card.t1{background:var(--t1d);border-color:rgba(200,64,64,0.35)}
+.tactic-card.t2{background:var(--t2d);border-color:rgba(64,168,80,0.35)}
+.tactic-card.t3{background:var(--t3d);border-color:rgba(200,168,0,0.35)}
+.tactic-card.t4{background:var(--t4d);border-color:rgba(208,208,208,0.2)}
+.tactic-card.listening{background:rgba(255,255,255,0.03);border-color:rgba(255,255,255,0.15);border-style:dashed}
+.tactic-card.empty{background:transparent;border-color:var(--line)}
+.tactic-dot{width:10px;height:10px;border-radius:50%}
+.tactic-roman{font-family:var(--serif);font-style:italic;font-size:3.2rem;line-height:1;font-weight:400}
+.tactic-label{font-size:10px;letter-spacing:0.08em;color:var(--mid)}
+.tactic-conf{font-size:9px;color:var(--dim)}
+.tactic-wait{font-size:10px;color:var(--dim);letter-spacing:0.1em}
+
+.timer-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:10px}
+.timer-outer{position:relative;width:76px;height:76px}
+.timer-svg{transform:rotate(-90deg)}
+.t-bg{fill:none;stroke:var(--bg3);stroke-width:5}
+.t-arc{fill:none;stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset .3s linear,stroke .5s}
+.t-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.t-digits{font-size:1rem;font-variant-numeric:tabular-nums;font-weight:500}
+.t-sub{font-size:7px;color:var(--dim);margin-top:1px}
+.timer-note{font-size:8px;color:var(--dim);letter-spacing:0.08em}
+
+.seq-row{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap}
+.seq-pip{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;
+  justify-content:center;font-family:var(--serif);font-style:italic;font-size:.9rem;
+  border:0.5px solid transparent;transition:all .2s;flex-shrink:0}
+.seq-pip.done{opacity:.22}
+.seq-pip.cur{transform:scale(1.15);box-shadow:0 0 0 1.5px var(--bright)}
+.seq-pip.fut{opacity:.55}
+.seq-pip.t1{background:var(--t1d);border-color:rgba(200,64,64,.3);color:var(--t1)}
+.seq-pip.t2{background:var(--t2d);border-color:rgba(64,168,80,.3);color:var(--t2)}
+.seq-pip.t3{background:var(--t3d);border-color:rgba(200,168,0,.3);color:var(--t3)}
+.seq-pip.t4{background:var(--t4d);border-color:rgba(200,200,200,.2);color:var(--t4)}
+
+.payoff-zone{background:var(--bg3);border:0.5px solid var(--line2);
+  border-radius:16px;padding:1rem;text-align:center;margin-bottom:1rem}
+.payoff-pair{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:8px}
+.payoff-icon{font-family:var(--serif);font-style:italic;font-size:2.2rem;line-height:1}
+.payoff-vs{font-size:11px;color:var(--dim);letter-spacing:0.1em}
+.payoff-result{font-size:11px;padding:4px 14px;border-radius:20px;display:inline-block;transition:all .3s}
+.payoff-result.win-l{background:rgba(200,120,64,.18);color:var(--linos);border:0.5px solid var(--linos-b)}
+.payoff-result.win-a{background:rgba(72,128,200,.18);color:var(--apollo);border:0.5px solid var(--apollo-b)}
+.payoff-result.draw{background:rgba(255,255,255,.05);color:var(--dim);border:0.5px solid var(--line2)}
+.payoff-result.empty{background:transparent;color:var(--dim);border:0.5px solid var(--line)}
+
+.log-wrap{background:var(--bg2);border:0.5px solid var(--line2);
+  border-radius:14px;padding:.9rem 1rem;margin-bottom:1rem}
+.log-title{font-size:9px;letter-spacing:0.16em;color:var(--dim);text-transform:uppercase;margin-bottom:8px}
+.log-list{display:flex;flex-wrap:wrap;gap:5px;max-height:80px;overflow-y:auto}
+.log-entry{font-size:9px;background:var(--bg3);padding:3px 9px;border-radius:16px}
+
+.controls{display:flex;gap:8px;justify-content:center;margin-top:.8rem}
+.ctrl-btn{padding:6px 16px;background:transparent;border:0.5px solid var(--line2);
+  border-radius:24px;color:var(--dim);font-family:var(--mono);font-size:10px;
+  cursor:pointer;transition:all .15s;letter-spacing:.06em}
+.ctrl-btn:hover{color:var(--mid);border-color:rgba(255,255,255,.25)}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:1000;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1.2rem;
+  font-family:var(--serif);font-style:italic}
+.overlay.hidden{display:none}
+.ov-icon{font-size:2.8rem}
+.ov-msg{font-size:1.4rem;text-align:center;line-height:1.5}
+.ov-count{font-size:1rem;color:var(--dim)}
+
+.end-screen{display:none;text-align:center;padding:2.5rem 1rem}
+.end-screen.active{display:block}
+.end-title{font-family:var(--serif);font-style:italic;font-size:2.2rem;margin-bottom:.5rem}
+.end-scores{display:flex;justify-content:center;gap:4rem;margin:1.2rem 0}
+.end-score-num{font-family:var(--serif);font-style:italic;font-size:4rem;line-height:1}
+.end-score-name{font-size:10px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;margin-top:4px}
+.end-summary{font-size:10px;color:var(--dim);line-height:2;margin-bottom:1.5rem}
+.restart-btn{padding:8px 24px;background:transparent;border:0.5px solid var(--line2);
+  border-radius:40px;color:var(--mid);font-family:var(--mono);font-size:11px;cursor:pointer}
+
+@keyframes flashIn{0%{opacity:0}20%{opacity:1}100%{opacity:0}}
+.flash{position:fixed;inset:0;pointer-events:none;opacity:0;z-index:500}
+.flash.fire{animation:flashIn .5s ease forwards}
+
+.legend{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--dim)}
+.leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="flash" id="flash"></div>
+<div class="root">
+
+<div class="header">
+  <h1>Linaia-Agon</h1>
+  <p> </p>
+</div>
+
+<!-- STATUS DE CONEXÃO COM O PYTHON -->
+<div class="conn-bar">
+  <div class="conn-dot err" id="connDot"></div>
+  <span class="conn-text" id="connText">Python desconectado — inicie linaia_server3.py</span>
+</div>
+
+<!-- PAINEL DE TESTE ALFA -->
+<div class="test-panel" id="testPanel">
+  <div class="test-title">test en temps reel — bataille α</div>
+  <div style="font-size:9px;color:var(--dim);margin-bottom:1rem">
+      Jouer sur le microphone. Le classificateur Python affiche le résultat en direct.
+      Veuillez vérifier que la connexion est active avant debut toute action.
+  </div>
+  <div class="test-grid">
+    <div>
+      <div class="tactic-live empty" id="tacticLive">
+        <div class="tl-roman" id="tlRoman" style="color:var(--dim)">—</div>
+        <div class="tl-name" id="tlName">Attente de Python</div>
+        <div class="tl-conf" id="tlConf"></div>
+      </div>
+      <div style="font-size:9px;color:var(--dim);margin-top:8px">Dernières évaluations:</div>
+      <div class="hist-row" id="histRow"></div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:.5rem">
+    <button class="ctrl-btn" onclick="toggleTestListen()" id="testListenBtn"
+      style="flex:1">▶ Démarrer l'écoute test</button>
+  </div>
+</div>
+
+<!-- SETUP CAMPANHA -->
+<div class="setup" id="setupPanel">
+  <div class="setup-title">Configurer la campagne</div>
+  <div class="setup-row">
+    <div>
+      <label class="setup-label">Durée totale (3 batalhas)</label>
+      <select class="setup-select" id="totalTime">
+        <option value="0" selected>Aléatoire (3–8 min)</option>
+        <option value="180">3 min</option>
+        <option value="300">5 min</option>
+        <option value="420">7 min</option>
+        <option value="480">8 min</option>
+      </select>
+    </div>
+    <div>
+      <label class="setup-label">janela de escuta por segmento</label>
+      <select class="setup-select" id="listenWindow">
+        <option value="5">5 segundos</option>
+        <option value="7" selected>7 segundos</option>
+        <option value="10">10 segundos</option>
+      </select>
+    </div>
+  </div>
+  <div class="legend" style="margin-bottom:.8rem">
+    <div class="leg-item"><div class="leg-dot" style="background:var(--t1)"></div>táctique I</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--t2)"></div>táctique II</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--t3)"></div>táctique III</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--t4)"></div>táctique IV</div>
+  </div>
+  <button class="start-btn" id="startBtn" onclick="startCampaign()" disabled>
+    ▶ iniciar campanha
+  </button>
+  <div style="font-size:9px;color:var(--dim);text-align:center;margin-top:10px">
+    α → β → γ · transition automatique
+  </div>
+</div>
+
+<!-- ARENA -->
+<div class="arena" id="arena">
+  <div class="battle-header">
+    <div class="score-side">
+      <div class="score-player" style="color:var(--linos)">Linos</div>
+      <div class="score-num linos" id="scoreLinos">0</div>
+    </div>
+    <div class="battle-name-pill" id="battleNamePill">α ALFA</div>
+    <div class="score-side right">
+      <div class="score-player" style="color:var(--apollo)">Apollo</div>
+      <div class="score-num apollo" id="scoreApollo">0</div>
+    </div>
+  </div>
+  <div class="prog-wrap">
+    <div class="prog-meta">
+      <span id="progLabel">bataille α</span>
+      <span><span id="elapsedT">00:00</span> / <span id="totalT">00:00</span></span>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+  </div>
+  <div class="dual">
+    <div class="player-col linos-col">
+      <div class="col-header">
+        <span class="col-name linos">Linos</span>
+        <span class="col-score" style="color:var(--linos)" id="colScoreLinos">0</span>
+      </div>
+      <div class="listen-indicator">
+        <div class="listen-dot" id="dotL"></div>
+        <span id="listenLabelL">en attendant</span>
+      </div>
+      <div class="tactic-card empty" id="cardLinos"><div class="tactic-wait">—</div></div>
+      <div class="timer-wrap">
+        <div class="timer-outer">
+          <svg width="76" height="76" viewBox="0 0 100 100" class="timer-svg">
+            <circle class="t-bg" cx="50" cy="50" r="42"/>
+            <circle class="t-arc" id="arcL" cx="50" cy="50" r="42"
+              stroke-dasharray="263.9" stroke-dashoffset="0" stroke="var(--linos)"/>
+          </svg>
+          <div class="t-center">
+            <div class="t-digits" id="timerL">—</div>
+            <div class="t-sub" id="timerSubL">segmento</div>
+          </div>
+        </div>
+        <div class="timer-note" id="timerNoteL"></div>
+      </div>
+      <div class="seq-row" id="seqL"></div>
+    </div>
+    <div class="player-col apollo-col">
+      <div class="col-header">
+        <span class="col-name apollo">Apollo</span>
+        <span class="col-score" style="color:var(--apollo)" id="colScoreApollo">0</span>
+      </div>
+      <div class="listen-indicator">
+        <div class="listen-dot" id="dotA"></div>
+        <span id="listenLabelA">en attendant</span>
+      </div>
+      <div class="tactic-card empty" id="cardApollo"><div class="tactic-wait">—</div></div>
+      <div class="timer-wrap">
+        <div class="timer-outer">
+          <svg width="76" height="76" viewBox="0 0 100 100" class="timer-svg">
+            <circle class="t-bg" cx="50" cy="50" r="42"/>
+            <circle class="t-arc" id="arcA" cx="50" cy="50" r="42"
+              stroke-dasharray="263.9" stroke-dashoffset="0" stroke="var(--apollo)"/>
+          </svg>
+          <div class="t-center">
+            <div class="t-digits" id="timerA">—</div>
+            <div class="t-sub" id="timerSubA">segmento</div>
+          </div>
+        </div>
+        <div class="timer-note" id="timerNoteA"></div>
+      </div>
+      <div class="seq-row" id="seqA"></div>
+    </div>
+  </div>
+  <div class="payoff-zone">
+    <div class="payoff-pair">
+      <span class="payoff-icon" id="pairL" style="color:var(--linos)">—</span>
+      <span class="payoff-vs">vs</span>
+      <span class="payoff-icon" id="pairA" style="color:var(--apollo)">—</span>
+    </div>
+    <div class="payoff-result empty" id="payoffResult">en attendant la première classification</div>
+  </div>
+  <div class="log-wrap">
+    <div class="log-title">historique des confrontations</div>
+    <div class="log-list" id="logList"><span style="font-size:9px;color:var(--dim)">—</span></div>
+  </div>
+  <div class="controls">
+    <button class="ctrl-btn" id="pauseBtn" onclick="togglePause()">⏸ pausar</button>
+    <button class="ctrl-btn" onclick="abandonCampaign()">✕ fermer</button>
+  </div>
+</div>
+
+<!-- END -->
+<div class="end-screen" id="endScreen">
+  <div class="end-title" id="endTitle">fin du combat</div>
+  <div class="end-scores">
+    <div><div class="end-score-num" style="color:var(--linos)" id="finalLinos">0</div>
+         <div class="end-score-name" style="color:var(--linos)">Linos</div></div>
+    <div><div class="end-score-num" style="color:var(--apollo)" id="finalApollo">0</div>
+         <div class="end-score-name" style="color:var(--apollo)">Apollo</div></div>
+  </div>
+  <div class="end-summary" id="endSummary"></div>
+  <button class="restart-btn" onclick="restart()">nouveau combat</button>
+</div>
+
+<!-- TRANSITION -->
+<div class="overlay hidden" id="overlay">
+  <div class="ov-icon" id="ovIcon">⚔️</div>
+  <div class="ov-msg" id="ovMsg">prochaine bataille</div>
+  <div class="ov-count" id="ovCount">3</div>
+</div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// CONFIGURAÇÃO
+// ══════════════════════════════════════════════════════
+
+const MATRICES = {
+  alpha: [[-2,0,0,0],[1,0,-3,-2],[0,-1,1,-2],[0,-1,-2,1]],
+  beta:  [[1,-2,-2,3],[1,-1,0,-2],[0,4,-2,-2],[-2,-1,5,1]],
+  gamma: [[4,-4,2,3],[-1,2,-1,-3],[-1,-1,0,4],[-3,1,5,-2]]
+};
+const BATTLE_ORDER  = ['alpha','beta','gamma'];
+const BATTLE_LABELS = {alpha:'α ALFA', beta:'β BETA', gamma:'γ GAMA'};
+const BATTLE_IDS    = {alpha:['I','II','III','IV'], beta:['I','II','III','IV'], gamma:['I','II','III','IV']};
+const TCLASS = ['t1','t2','t3','t4'];
+const TCOLOR = ['var(--t1)','var(--t2)','var(--t3)','var(--t4)'];
+const TNAME  = ['tática I','tática II','tática III','tática IV'];
+const TDESC  = ['notas sustentadas','cromático / tercinas','glissandi','silêncio ativo'];
+
+// ══════════════════════════════════════════════════════
+// ESTADO
+// ══════════════════════════════════════════════════════
+let pythonConnected = false;
+let pythonState     = null;   // último JSON recebido do Python
+let testListening   = false;
+let pollId          = null;
+
+let camp        = null;
+let tickId      = null;
+let bStart      = null;
+let paused      = false;
+let listenWin   = 7;
+
+let lastTacticLinos  = null;
+let lastTacticApollo = null;
+let confirmedL       = null;
+let confirmedA       = null;
+
+// ══════════════════════════════════════════════════════
+// POLLING — busca estado do Python a cada POLL_MS
+// ══════════════════════════════════════════════════════
+function startPolling(){
+  if(pollId) clearInterval(pollId);
+  pollId = setInterval(pollPython, POLL_MS);
+  pollPython(); // imediato
+}
+
+async function pollPython(){
+  try {
+    const r = await fetch(PYTHON_URL, {cache:'no-store'});
+    if(!r.ok) throw new Error('status ' + r.status);
+    pythonState     = await r.json();
+    pythonConnected = true;
+    updateConnStatus(true);
+    if(testListening) updateTestPanel(pythonState);
+    if(camp) updateFromPython(pythonState);
+  } catch(e) {
+    pythonConnected = false;
+    updateConnStatus(false);
+  }
+}
+
+function updateConnStatus(ok){
+  const dot  = document.getElementById('connDot');
+  const text = document.getElementById('connText');
+  const btn  = document.getElementById('startBtn');
+  dot.className  = 'conn-dot ' + (ok ? 'ok' : 'err');
+  text.textContent = ok
+    ? 'Python conectado · porta 8765'
+    : 'Python desconectado — inicie linaia_server.py';
+  btn.disabled = !ok;
+}
+
+// ══════════════════════════════════════════════════════
+// PAINEL DE TESTE ALFA
+// ══════════════════════════════════════════════════════
+function toggleTestListen(){
+  testListening = !testListening;
+  const btn = document.getElementById('testListenBtn');
+  btn.textContent = testListening ? '⏸ parar escuta' : '▶ iniciar escuta de teste';
+
+  // Avisa Python para ativar/desativar captura
+  // O Python recebe via OSC do SC, mas para o teste podemos usar
+  // uma rota HTTP simples de controle (não implementada aqui —
+  // use o SC: ~pythonStart.() / ~pythonStop.() no editor)
+}
+
+function updateTestPanel(s){
+  if(!s || !s.features || Object.keys(s.features).length === 0) return;
+
+  const f = s.features;
+  // Barras de features
+  setBar('fAmp',   'vAmp',  f.amp_max,     1.0);
+  setBar('fProem', 'vProem',f.proem_media, 1.0);
+  setBar('fTend',  'vTend', f.tendencia,   0.5);
+  setBar('fFreq',  'vFreq', f.freq_alta,   0.3);
+
+  // Tática live
+  const t = s.tatica; // 1–4 ou 0 se sem classificação
+  const pos = t > 0 ? t-1 : null;
+  const liveEl = document.getElementById('tacticLive');
+  const romanEl = document.getElementById('tlRoman');
+  const nameEl  = document.getElementById('tlName');
+  const confEl  = document.getElementById('tlConf');
+
+  if(pos !== null){
+    liveEl.className = 'tactic-live ' + TCLASS[pos];
+    romanEl.textContent = BATTLE_IDS.alpha[pos];
+    romanEl.style.color = TCOLOR[pos];
+    nameEl.textContent  = TNAME[pos];
+    confEl.textContent  = 'conf ' + (s.confianca*100).toFixed(0) + '%';
+  } else {
+    liveEl.className = 'tactic-live empty';
+    romanEl.textContent = '—';
+    romanEl.style.color = 'var(--dim)';
+    nameEl.textContent  = s.ativo ? 'escutando...' : 'Python pausado';
+    confEl.textContent  = '';
+  }
+
+  // Histórico
+  const hist = s.historico || [];
+  document.getElementById('histRow').innerHTML = hist.map(v => {
+    const p = v-1;
+    return `<div class="hist-pip ${TCLASS[p]}">${BATTLE_IDS.alpha[p]}</div>`;
+  }).join('');
+}
+
+function setBar(barId, valId, value, max){
+  const pct = Math.min(100, (value / max) * 100).toFixed(1);
+  document.getElementById(barId).style.width = pct + '%';
+  document.getElementById(valId).textContent = value.toFixed(3);
+}
+
+// ══════════════════════════════════════════════════════
+// CAMPANHA
+// ══════════════════════════════════════════════════════
+function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function fmt(s){ return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+
+function distributeTime(total, n){
+  const out=[]; let rem=total;
+  for(let i=0;i<n-1;i++){
+    const mn=Math.max(30,Math.floor(rem*.2));
+    const mx=Math.min(rem-30,Math.floor(rem*.6));
+    out.push(rand(mn,Math.max(mn,mx))); rem-=out[out.length-1];
+  }
+  out.push(rem); return out;
+}
+
+function genSegments(sec){
+  const segs=[]; let acc=0;
+  while(acc < sec-8){
+    const dur=rand(20,Math.min(60,sec-acc-8));
+    segs.push({dur,acc}); acc+=dur;
+  }
+  if(!segs.length) segs.push({dur:sec,acc:0});
+  return segs;
+}
+
+function startCampaign(){
+  if(!pythonConnected){ alert('Python não está conectado.'); return; }
+  const totalRaw = parseInt(document.getElementById('totalTime').value);
+  listenWin      = parseInt(document.getElementById('listenWindow').value);
+  const total    = totalRaw>0 ? totalRaw : rand(180,480);
+  const times    = distributeTime(total,3);
+
+  camp = {
+    battles: BATTLE_ORDER.map((key,i)=>({
+      key, dur:times[i], segs:genSegments(times[i]),
+      scoreLinos:0, scoreApollo:0, log:[]
+    })),
+    totalLinos:0, totalApollo:0, idx:0, segIdx:0,
+    segElapsed:0, done:false
+  };
+
+  document.getElementById('setupPanel').style.display  = 'none';
+  document.getElementById('testPanel').style.display   = 'none';
+  document.getElementById('arena').classList.add('active');
+  document.getElementById('endScreen').classList.remove('active');
+  testListening = false;
+  launchBattle();
+}
+
+function launchBattle(){
+  const b = currentBattle();
+  bStart  = Date.now();
+  camp.segIdx    = 0;
+  camp.segElapsed= 0;
+  confirmedL = confirmedA = null;
+  lastTacticLinos = lastTacticApollo = null;
+
+  document.getElementById('battleNamePill').textContent = BATTLE_LABELS[b.key];
+  document.getElementById('progLabel').textContent = 'batalha ' + BATTLE_LABELS[b.key];
+  document.getElementById('totalT').textContent = fmt(b.dur);
+  document.getElementById('logList').innerHTML = '<span style="font-size:9px;color:var(--dim)">—</span>';
+
+  renderSeqs();
+  updateCardEmpty('cardLinos');
+  updateCardEmpty('cardApollo');
+  updatePayoff(null,null,null,b.key);
+
+  if(tickId) clearInterval(tickId);
+  tickId = setInterval(tick, 250);
+}
+
+// ══════════════════════════════════════════════════════
+// TICK — motor do timer no HTML
+// ══════════════════════════════════════════════════════
+function tick(){
+  if(paused) return;
+  const b = currentBattle();
+  if(!b) return;
+
+  const elapsed = (Date.now()-bStart)/1000;
+  const pct = Math.min(100, elapsed/b.dur*100);
+  document.getElementById('progFill').style.width = pct+'%';
+  document.getElementById('elapsedT').textContent = fmt(Math.floor(elapsed));
+
+  if(elapsed >= b.dur){ endBattle(); return; }
+
+  const seg     = b.segs[camp.segIdx];
+  if(!seg){ endBattle(); return; }
+
+  camp.segElapsed = elapsed - seg.acc;
+  const segRem    = Math.max(0, seg.dur - camp.segElapsed);
+  const listening = camp.segElapsed < listenWin;
+
+  // Transição de segmento
+  if(camp.segElapsed >= seg.dur){
+    const fl = confirmedL ?? lastTacticLinos ?? rand(0,3);
+    const fa = confirmedA ?? lastTacticApollo ?? rand(0,3);
+    scoreSegment(fl, fa, b);
+    camp.segIdx++;
+    camp.segElapsed = 0;
+    confirmedL = confirmedA = null;
+    lastTacticLinos = lastTacticApollo = null;
+    renderSeqs();
+    return;
+  }
+
+  setListeningUI('L', listening);
+  setListeningUI('A', listening);
+
+  // Mostra tática ao vivo durante janela de escuta
+  if(listening){
+    if(lastTacticLinos  !== null) showTacticLive('cardLinos',  lastTacticLinos,  b.key);
+    else showTacticListening('cardLinos');
+    if(lastTacticApollo !== null) showTacticLive('cardApollo', lastTacticApollo, b.key);
+    else showTacticListening('cardApollo');
+  } else {
+    // Congela ao sair da janela
+    if(confirmedL === null && lastTacticLinos  !== null){
+      confirmedL = lastTacticLinos;
+      showTacticConfirmed('cardLinos',  confirmedL,  b.key);
+    }
+    if(confirmedA === null && lastTacticApollo !== null){
+      confirmedA = lastTacticApollo;
+      showTacticConfirmed('cardApollo', confirmedA, b.key);
+    }
+  }
+
+  updateSegTimer('L', segRem, seg.dur, listening);
+  updateSegTimer('A', segRem, seg.dur, listening);
+  document.getElementById('timerSubL').textContent =
+    'seg '+(camp.segIdx+1)+'/'+b.segs.length;
+  document.getElementById('timerSubA').textContent =
+    'seg '+(camp.segIdx+1)+'/'+b.segs.length;
+}
+
+// ══════════════════════════════════════════════════════
+// RECEBE DO PYTHON VIA POLLING
+// ══════════════════════════════════════════════════════
+function updateFromPython(s){
+  if(!camp || !s) return;
+  const t = s.tatica;  // 1–4
+  if(t >= 1 && t <= 4){
+    const pos = t-1;    // 0–3
+    const b   = currentBattle();
+    // O Python só tem um canal (1 microfone), então alimenta Linos.
+    // Se quiser Apollo num canal separado, o Python precisaria de 2 mics.
+    // Por enquanto: Linos = classificação do Python
+    lastTacticLinos = pos;
+    // Apollo = escolha aleatória (fallback até ter 2 mics)
+    if(lastTacticApollo === null) lastTacticApollo = rand(0,3);
+  }
+
+  // Placar do SC
+  if(s.scoreLinos  !== undefined) document.getElementById('scoreLinos').textContent  = s.scoreLinos;
+  if(s.scoreApollo !== undefined) document.getElementById('scoreApollo').textContent = s.scoreApollo;
+}
+
+// ══════════════════════════════════════════════════════
+// HELPERS DE UI
+// ══════════════════════════════════════════════════════
+function currentBattle(){ return camp && camp.battles[camp.idx]; }
+
+function setListeningUI(side, active){
+  document.getElementById('dot'+side).classList.toggle('active', active);
+  document.getElementById('listenLabel'+side).textContent = active ? 'escutando' : 'aguardando';
+  document.getElementById('timerNote'+side).textContent   = active ? '● escuta ativa' : '';
+}
+
+function showTacticLive(cardId, pos, battleKey){
+  const ids=BATTLE_IDS[battleKey], el=document.getElementById(cardId);
+  el.className = 'tactic-card '+TCLASS[pos];
+  el.innerHTML = `<div class="tactic-dot" style="background:${TCOLOR[pos]}"></div>
+    <div class="tactic-roman" style="color:${TCOLOR[pos]}">${ids[pos]}</div>
+    <div class="tactic-label">${TNAME[pos]}</div>
+    <div class="tactic-conf">classificando…</div>`;
+}
+
+function showTacticListening(cardId){
+  const el=document.getElementById(cardId);
+  el.className='tactic-card listening';
+  el.innerHTML='<div class="tactic-wait">escutando…</div>';
+}
+
+function showTacticConfirmed(cardId, pos, battleKey){
+  const ids=BATTLE_IDS[battleKey], el=document.getElementById(cardId);
+  el.className='tactic-card '+TCLASS[pos];
+  el.innerHTML=`<div class="tactic-dot" style="background:${TCOLOR[pos]}"></div>
+    <div class="tactic-roman" style="color:${TCOLOR[pos]}">${ids[pos]}</div>
+    <div class="tactic-label">${TNAME[pos]}</div>
+    <div class="tactic-conf">${TDESC[pos]}</div>`;
+}
+
+function updateCardEmpty(cardId){
+  const el=document.getElementById(cardId);
+  el.className='tactic-card empty';
+  el.innerHTML='<div class="tactic-wait">—</div>';
+}
+
+function updateSegTimer(side, rem, total, listening){
+  const circ=263.9, frac=rem/total;
+  const arc=document.getElementById('arc'+side);
+  arc.style.strokeDashoffset=(circ*(1-frac)).toFixed(1);
+  arc.style.stroke = listening ? 'var(--ok)' :
+    frac < .25 ? 'var(--err)' : frac < .5 ? 'var(--warn)' :
+    side==='L' ? 'var(--linos)' : 'var(--apollo)';
+  document.getElementById('timer'+side).textContent=fmt(Math.ceil(rem));
+}
+
+function scoreSegment(posL, posA, b){
+  const payoff = MATRICES[b.key][posL][posA];
+  if(payoff>0) b.scoreLinos+=payoff;
+  else if(payoff<0) b.scoreApollo+=Math.abs(payoff);
+  b.log.unshift({posL,posA,payoff,idL:BATTLE_IDS[b.key][posL],idA:BATTLE_IDS[b.key][posA]});
+  updateScores();
+  updatePayoff(posL,posA,payoff,b.key);
+  renderLog(b);
+  flashColor(payoff);
+  showTacticConfirmed('cardLinos', posL, b.key);
+  showTacticConfirmed('cardApollo',posA, b.key);
+}
+
+function updateScores(){
+  const b=currentBattle(); if(!b) return;
+  const tl=camp.totalLinos+b.scoreLinos, ta=camp.totalApollo+b.scoreApollo;
+  document.getElementById('scoreLinos').textContent  = tl;
+  document.getElementById('scoreApollo').textContent = ta;
+  document.getElementById('colScoreLinos').textContent  = b.scoreLinos;
+  document.getElementById('colScoreApollo').textContent = b.scoreApollo;
+}
+
+function updatePayoff(posL,posA,payoff,battleKey){
+  const pL=document.getElementById('pairL'),pA=document.getElementById('pairA');
+  const res=document.getElementById('payoffResult');
+  const ids=BATTLE_IDS[battleKey];
+  if(posL===null){ pL.textContent='—'; pA.textContent='—';
+    res.className='payoff-result empty'; res.textContent='aguardando primeira classificação'; return; }
+  pL.textContent=ids[posL]; pL.style.color=TCOLOR[posL];
+  pA.textContent=ids[posA]; pA.style.color=TCOLOR[posA];
+  if(payoff>0){ res.className='payoff-result win-l'; res.textContent='Linos +'+payoff; }
+  else if(payoff<0){ res.className='payoff-result win-a'; res.textContent='Apollo +'+Math.abs(payoff); }
+  else{ res.className='payoff-result draw'; res.textContent='empate · 0'; }
+}
+
+function renderLog(b){
+  document.getElementById('logList').innerHTML=b.log.slice(0,20).map(e=>{
+    const col=e.payoff>0?'color:var(--linos)':e.payoff<0?'color:var(--apollo)':'color:var(--dim)';
+    return `<span class="log-entry" style="${col}">${e.idL} · ${e.idA} → ${e.payoff>0?'+'+e.payoff:e.payoff}</span>`;
+  }).join('');
+}
+
+function renderSeqs(){
+  const b=currentBattle(); if(!b) return;
+  ['L','A'].forEach(side=>{
+    const el=document.getElementById('seq'+side);
+    el.innerHTML=b.segs.map((_,i)=>{
+      const state=i<camp.segIdx?'done':i===camp.segIdx?'cur':'fut';
+      const log=b.log[b.segs.length-1-i];
+      const tcls=log?TCLASS[side==='L'?log.posL:log.posA]:'t4';
+      return `<div class="seq-pip ${tcls} ${state}">${i+1}</div>`;
+    }).join('');
+  });
+}
+
+function flashColor(payoff){
+  const fl=document.getElementById('flash');
+  fl.style.background=payoff>0?'rgba(200,120,64,.07)':payoff<0?'rgba(72,128,200,.07)':'rgba(255,255,255,.03)';
+  fl.className='flash fire'; setTimeout(()=>fl.className='flash',600);
+}
+
+function endBattle(){
+  clearInterval(tickId);
+  const b=currentBattle(); if(!b) return;
+  if(camp.segIdx<b.segs.length){
+    scoreSegment(confirmedL??lastTacticLinos??rand(0,3), confirmedA??lastTacticApollo??rand(0,3), b);
+  }
+  camp.totalLinos+=b.scoreLinos; camp.totalApollo+=b.scoreApollo;
+  camp.idx++;
+  if(camp.idx<BATTLE_ORDER.length) showTransition(camp.idx);
+  else finishCampaign();
+}
+
+function showTransition(nextIdx){
+  const prev=camp.battles[nextIdx-1], next=camp.battles[nextIdx];
+  const ov=document.getElementById('overlay');
+  document.getElementById('ovIcon').textContent=nextIdx===1?'⚔️':nextIdx===2?'🔱':'⚡';
+  document.getElementById('ovMsg').innerHTML=
+    BATTLE_LABELS[prev.key]+' → '+BATTLE_LABELS[next.key]+
+    '<br><span style="font-size:.75rem;color:var(--dim)">Linos '+prev.scoreLinos+' · Apollo '+prev.scoreApollo+'</span>';
+  ov.classList.remove('hidden');
+  let c=3; document.getElementById('ovCount').textContent=c;
+  const iv=setInterval(()=>{c--;document.getElementById('ovCount').textContent=c;
+    if(c<=0){clearInterval(iv);ov.classList.add('hidden');launchBattle();}},1000);
+}
+
+function finishCampaign(){
+  clearInterval(tickId);
+  document.getElementById('arena').classList.remove('active');
+  document.getElementById('endScreen').classList.add('active');
+  const tl=camp.totalLinos,ta=camp.totalApollo;
+  document.getElementById('finalLinos').textContent=tl;
+  document.getElementById('finalApollo').textContent=ta;
+  document.getElementById('endTitle').textContent=tl>ta?'Linos vence':ta>tl?'Apollo vence':'empate';
+  document.getElementById('endSummary').innerHTML=
+    camp.battles.map(b=>BATTLE_LABELS[b.key]+': Linos '+b.scoreLinos+' · Apollo '+b.scoreApollo+' ('+fmt(b.dur)+')<br>').join('');
+}
+
+function togglePause(){
+  paused=!paused;
+  document.getElementById('pauseBtn').textContent=paused?'▶ continuar':'⏸ pausar';
+}
+function abandonCampaign(){ clearInterval(tickId); finishCampaign(); }
+function restart(){
+  clearInterval(tickId); camp=null; paused=false;
+  document.getElementById('endScreen').classList.remove('active');
+  document.getElementById('setupPanel').style.display='block';
+  document.getElementById('testPanel').style.display='block';
+}
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+startPolling();
+</script>
+</body>
+</html>
