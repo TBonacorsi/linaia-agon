@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2026 Thayná Bonacorsi
+Copyright (c) 2026 Thayná A. Bonacorsi Xavier
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +19,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+NOTE ON THE MUSICAL WORK
+
+This software is a tool for performing Iannis Xenakis's *Linaia-Agon* (1972),
+published by Éditions Salabert. The software itself is released under the MIT
+License, but the musical work, score, and any recordings thereof remain subject
+to their respective copyright holders. Users are responsible for obtaining
+appropriate performance licenses for the musical work.
