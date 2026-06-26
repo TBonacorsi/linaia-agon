@@ -1,6 +1,6 @@
 # Linaia-Agon — Real-Time Musical Tactic Classification System
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX)
+[![DOI](https://doi.org/10.5281/zenodo.20921295)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > Automated referee system for Iannis Xenakis's *Linaia-Agon* (1972).  
@@ -191,8 +191,8 @@ If you use this software in academic work, please cite:
   title     = {Linaia-Agon: Real-time musical tactic classification system},
   year      = {2026},
   publisher = {Zenodo},
-  doi       = {10.5281/zenodo.XXXXXXX},
-  url       = {https://github.com/tbonacorsi/linaia-agon}
+  doi       = {10.5281/zenodo.20921295},
+  url       = {https://github.com/TBonacorsi/linaia-agon}
 }
 ```
 
