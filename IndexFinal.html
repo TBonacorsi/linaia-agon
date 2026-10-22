@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Linaia-Agon · Test en direct</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f2ee;--card:#fff;--ink:#1a1a1a;--dim:#6b6b6b;--line:#d9d5cc;--linos:#b5601f;--apollo:#2f64b0;--ok:#2e8b46;--err:#c23b3b;--accent:var(--linos);
+--serif:'Cormorant Garamond',Georgia,serif;--sans:'Figtree',system-ui,sans-serif;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0b0c;--card:#151517;--ink:#f1efe9;--dim:#8d8d92;--line:#2a2a2e;--linos:#e0924f;--apollo:#6c9fe6;--ok:#4cc16a;--err:#e86a6a}}
+:root[data-theme="dark"]{--bg:#0b0b0c;--card:#151517;--ink:#f1efe9;--dim:#8d8d92;--line:#2a2a2e;--linos:#e0924f;--apollo:#6c9fe6;--ok:#4cc16a;--err:#e86a6a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--sans);min-height:100vh}
+main{max-width:560px;margin:0 auto;padding:20px 16px 40px}
+h1{font:italic 500 2rem/1.1 var(--serif);margin:0 0 4px}
+p.sub{margin:0 0 20px;color:var(--dim);font-size:.92rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.lbl{font-size:.85rem;color:var(--dim);margin:0 0 8px}
+.seg{display:flex;gap:8px;margin-bottom:14px}
+.seg button{flex:1;padding:12px 8px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:10px;font:inherit;cursor:pointer;min-height:48px}
+.seg button[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);font-weight:600}
+.go{width:100%;padding:14px;border:0;border-radius:12px;background:var(--ink);color:var(--bg);font:600 1rem var(--sans);cursor:pointer;min-height:50px}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#stage{text-align:center;display:none}
+#num{font:italic 500 7rem/1 var(--serif);min-height:1em;transition:color .2s}
+#nm{font-weight:600;margin-top:2px}
+#cf{color:var(--dim);font-size:.9rem}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin:10px 0 4px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+#msg{font-size:.85rem;color:var(--dim);min-height:1.3em}
+#verdict{font-weight:600;font-size:1.1rem;min-height:1.6em;margin-top:8px}
+.ok{color:var(--ok)}.bad{color:var(--err)}
+table{border-collapse:collapse;width:100%;font-size:.85rem;text-align:center;margin-top:8px}
+th,td{padding:6px 4px;border:1px solid var(--line)}
+td.hit{background:color-mix(in srgb,var(--ok) 22%,transparent);font-weight:600}
+textarea{width:100%;height:120px;font:12px/1.4 ui-monospace,monospace;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px;margin-top:8px}
+.row{display:flex;gap:8px}.row button{flex:1}
+.sec{padding:11px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:10px;font:inherit;cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+<h1>Linaia-Agon</h1>
+<p class="sub">Jouez de votre instrument et voyez si le système reconnaît la tactique. Utilisez un casque ou éloignez-vous des enceintes.</p>
+
+<section class="card" id="setup">
+  <p class="lbl">Bataille</p>
+  <div class="seg" id="sBat"><button data-v="alpha" aria-pressed="true">α</button><button data-v="beta" aria-pressed="false">β</button><button data-v="gamma" aria-pressed="false">γ</button></div>
+  <p class="lbl">Votre personnage</p>
+  <div class="seg" id="sWho"><button data-v="Linos" aria-pressed="true">Linos</button><button data-v="Apollon" aria-pressed="false">Apollon</button></div>
+  <button class="go" id="start">Activer le microphone</button>
+  <p id="err" class="bad" style="margin:10px 0 0;font-size:.9rem"></p>
+</section>
+
+<section id="stage">
+  <div class="card">
+    <div id="num">–</div>
+    <div id="nm">En attente de son</div>
+    <div id="cf"></div>
+    <div class="bar" title="Fenêtre de 6 s"><i id="win"></i></div>
+    <div id="msg">Jouez pour remplir la fenêtre de 6 s.</div>
+    <div class="bar" title="Niveau du microphone"><i id="lvl" style="background:var(--dim)"></i></div>
+    <div id="verdict"></div>
+  </div>
+  <div class="card">
+    <p class="lbl">Quelle tactique allez-vous jouer ? Une fois choisie, le décompte des réussites commence après 6 s.</p>
+    <div class="seg" id="sExp"></div>
+    <div id="stats"></div>
+    <div class="row" style="margin-top:12px"><button class="sec" id="reset">Réinitialiser</button><button class="sec" id="copy">Générer le résultat</button></div>
+    <textarea id="out" readonly hidden></textarea>
+  </div>
+</section>
+</main>
+
+<script>
+// ── Referências (iguais ao servidor Python) ordem: freq_dom, centroide, espalhamento, energia, integral
+const REF={
+alpha_Apollon:[[313.6,1326.0,1894.2,.000604,.1106],[143.4,531.0,972.5,.000497,.0742],[181.5,663.2,1116.5,.000374,.0768]],
+alpha_Linos:[[317.0,994.2,1049.3,.000877,.0938],[396.7,1099.6,1187.1,.002171,.3067],[225.6,602.5,588.7,.000237,.0784]],
+beta_Apollon:[[397.0,1353.3,1742.7,.007505,.2047],[648.5,1318.9,1470.1,.003917,.4475],[297.3,627.8,936.7,.000099,.0338]],
+beta_Linos:[[475.6,1158.5,1302.7,.017463,.6605],[294.2,1229.1,1419.7,.020043,1.0855],[249.0,617.8,551.5,.003839,.3093]],
+gamma_Apollon:[[174.2,898.9,1184.8,.000910,.2093],[347.1,947.4,1300.2,.001810,.2501],[499.4,718.3,875.9,.003817,.3364]],
+gamma_Linos:[[356.6,1000.5,1000.7,.000036,.0333],[320.6,992.1,1226.3,.000027,.0274],[363.4,1026.5,1241.3,.000049,.0458]]};
+for(const k in REF)REF[k].push([0,0,0,1e-8,1e-5]);
+const PESO=[1,.8,.6,.3,.5];
+const ROMANOS={alpha:['I','II','III','IV'],beta:['V','VI','VII','VIII'],gamma:['IX','X','XI','XII']};
+const SR=22050, N=131072;           // 2^17 amostras ≈ 5,94 s (FFT radix-2)
+const PASSO=SR;                      // 1 s
+
+function fft(re,im){const n=re.length;
+ for(let i=1,j=0;i<n;i++){let b=n>>1;for(;j&b;b>>=1)j^=b;j^=b;if(i<j){let t=re[i];re[i]=re[j];re[j]=t;t=im[i];im[i]=im[j];im[j]=t}}
+ for(let len=2;len<=n;len<<=1){const a=-2*Math.PI/len,wr=Math.cos(a),wi=Math.sin(a),h=len>>1;
+  for(let i=0;i<n;i+=len){let cr=1,ci=0;for(let k=0;k<h;k++){const u=i+k,v=u+h;
+   const xr=re[v]*cr-im[v]*ci,xi=re[v]*ci+im[v]*cr;re[v]=re[u]-xr;im[v]=im[u]-xi;re[u]+=xr;im[u]+=xi;
+   const t=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=t}}}}
+
+function features(x){
+ const n=x.length;let m=0;for(let i=0;i<n;i++)m+=x[i];m/=n;
+ const re=new Float64Array(n),im=new Float64Array(n);let mx=0;
+ for(let i=0;i<n;i++){re[i]=x[i]-m;const v=Math.abs(re[i]);if(v>mx)mx=v}
+ if(mx<.001)return null;
+ fft(re,im);
+ const H=n/2,a=new Float64Array(H),f=new Float64Array(H);let sa=0,best=0,bi=0;
+ for(let k=1;k<=H;k++){const v=Math.hypot(re[k],im[k])/n;a[k-1]=v;f[k-1]=k*SR/n;sa+=v;if(v>a[bi]||k===1)bi=k-1}
+ let cs=0;for(let i=0;i<H;i++)cs+=f[i]*a[i];const cen=cs/(sa+1e-10);
+ let sp=0,en=0,ig=0;for(let i=0;i<H;i++){sp+=(f[i]-cen)**2*a[i];en+=a[i]*a[i];if(i)ig+=(a[i]+a[i-1])/2*(f[i]-f[i-1])}
+ const dur=n/SR,r=(v,d)=>+v.toFixed(d);
+ return[r(f[bi],1),r(cen,1),r(Math.sqrt(sp/(sa+1e-10)),1),r(en/dur,8),r(ig/dur,6)];
+}
+function classificar(cen,F){
+ if(!F||F[3]<1e-7)return[4,1];
+ const refs=REF[cen],pt=PESO.reduce((s,v)=>s+v,0),d=[];
+ refs.forEach(ref=>{let t=0;for(let i=0;i<5;i++){const df=ref[i]>.0001?Math.abs(F[i]-ref[i])/ref[i]:Math.abs(F[i]-ref[i]);t+=PESO[i]*df}d.push(t/pt)});
+ let bi=0;d.forEach((v,i)=>{if(v<d[bi])bi=i});
+ const s=[...d].sort((p,q)=>p-q);let c=.5;
+ if(s[0]>0){const x=(s[1]-s[0])/(s[0]+1e-10);c=1/(1+Math.exp(-x*.5))}
+ return[bi+1,Math.round(c*1000)/1000];
+}
+function votar(hist){ // moda das últimas 5, ignorando silêncio (igual ao Python)
+ const r=hist.slice(-5),s=r.filter(v=>v!==4);
+ if(!s.length||s.length<r.length*.4)return 4;
+ const c={};s.forEach(v=>c[v]=(c[v]||0)+1);let b=s[0];s.forEach(v=>{if(c[v]>c[b])b=v});return b;
+}
+
+// ── Estado e áudio
+let bat='alpha',who='Linos',exp=null,ctx=null,ring=new Float32Array(N),filled=0,pos=0,since=0,hist=[],stat=freshStat();
+let acc=0,cnt=0,ph=0,ratio=1,lvlRms=0,rmsSum=0,rmsN=0;
+function freshStat(){return{n:0,hit:0,m:[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],tot:[0,0,0,0]}}
+const $=id=>document.getElementById(id);
+const cen=()=>bat+'_'+who;
+
+function seg(id,cb){$(id).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+ [...$(id).children].forEach(x=>x.setAttribute('aria-pressed',x===b));cb(b.dataset.v)})}
+seg('sBat',v=>{bat=v;resetWin();buildExp()});
+seg('sWho',v=>{who=v;document.documentElement.style.setProperty('--accent',v==='Linos'?'var(--linos)':'var(--apollo)');resetWin()});
+function buildExp(){const R=ROMANOS[bat];$('sExp').innerHTML=[0,1,2,3].map(i=>
+ `<button data-v="${i+1}" aria-pressed="${exp===i+1}">${i<3?R[i]:'Silence'}</button>`).join('');
+ $('sExp').style.flexWrap='wrap'}
+$('sExp').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+ exp=+b.dataset.v;[...$('sExp').children].forEach(x=>x.setAttribute('aria-pressed',x===b));resetWin()});
+buildExp();
+
+function resetWin(){filled=0;pos=0;since=0;hist=[];acc=0;cnt=0;ph=0;$('win').style.width='0';
+ $('num').textContent='–';$('num').style.color='';$('nm').textContent='En attente de la fenêtre';$('cf').textContent='';$('verdict').textContent='';
+ $('msg').textContent='Jouez pour remplir la fenêtre de 6 s.';renderStats()}
+
+function push(inp){
+ let s=0;
+ for(let i=0;i<inp.length;i++){const v=inp[i];s+=v*v;acc+=v;cnt++;ph++;
+  if(ph>=ratio){ph-=ratio;ring[pos]=acc/cnt;acc=0;cnt=0;pos=(pos+1)%N;if(filled<N)filled++;since++;
+   if(filled>=N&&since>=PASSO){since=0;processar()}}}
+ lvlRms=Math.sqrt(s/inp.length);rmsSum+=lvlRms;rmsN++;
+ $('lvl').style.width=Math.min(100,Math.sqrt(lvlRms)*220)+'%';
+ if(filled<N)$('win').style.width=(filled/N*100)+'%';
+}
+function processar(){
+ const x=new Float32Array(N);for(let i=0;i<N;i++)x[i]=ring[(pos+i)%N];
+ const F=features(x),[t,c]=classificar(cen(),F);
+ hist.push(t);if(hist.length>10)hist.shift();
+ const est=votar(hist),R=ROMANOS[bat];
+ $('win').style.width='100%';
+ $('num').textContent=R[est-1];$('num').style.color=est===4?'var(--dim)':'var(--accent)';
+ $('nm').textContent=est===4?'Silence':'Tactique '+est;
+ $('cf').textContent=F?`confiance ${Math.round(c*100)} % · fréquence dominante ${F[0]} Hz`:'pas de signal';
+ $('msg').textContent='Mise à jour chaque seconde.';
+ if(exp){stat.n++;stat.tot[exp-1]++;stat.m[exp-1][est-1]++;
+  const ok=est===exp;if(ok)stat.hit++;
+  $('verdict').innerHTML=ok?'<span class="ok">✓ Reconnu</span>':`<span class="bad">✗ Détecté : ${est===4?'silence':R[est-1]}</span>`;renderStats()}
+}
+function renderStats(){
+ if(!stat.n){$('stats').innerHTML='<p class="lbl" style="margin:0">Aucune fenêtre comptée pour l’instant.</p>';return}
+ const R=ROMANOS[bat],nm=i=>i<3?R[i]:'Sil.';
+ let h=`<p style="margin:0"><b>${Math.round(stat.hit/stat.n*100)} %</b> de réussite (${stat.hit} sur ${stat.n} fenêtres)</p>
+ <table><tr><th>joué ↓ / lu →</th>${[0,1,2,3].map(i=>`<th>${nm(i)}</th>`).join('')}</tr>`;
+ for(let i=0;i<4;i++)if(stat.tot[i])h+=`<tr><th>${nm(i)}</th>${stat.m[i].map((v,j)=>`<td class="${i===j&&v?'hit':''}">${v}</td>`).join('')}</tr>`;
+ $('stats').innerHTML=h+'</table>';
+}
+$('reset').onclick=()=>{stat=freshStat();rmsSum=0;rmsN=0;renderStats()};
+$('copy').onclick=()=>{
+ const R=ROMANOS[bat],nm=i=>i<3?R[i]:'silence';
+ let t=`Linaia-Agon test · ${bat} · ${who} · ${new Date().toISOString().slice(0,16)}\nRéussite : ${stat.hit}/${stat.n}`+(stat.n?` (${Math.round(stat.hit/stat.n*100)}%)`:'')+`\nNiveau moyen d'entrée (RMS): ${rmsN?(rmsSum/rmsN).toFixed(4):'-'}\nJoué -> lu [${[0,1,2,3].map(nm).join(' ')}]\n`;
+ for(let i=0;i<4;i++)if(stat.tot[i])t+=`${nm(i)}: ${stat.m[i].join(' ')}\n`;
+ t+=navigator.userAgent;const o=$('out');o.hidden=false;o.value=t;o.select();
+ try{navigator.clipboard.writeText(t)}catch(e){}};
+
+$('start').onclick=async()=>{
+ $('err').textContent='';
+ try{
+  const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false,channelCount:1}});
+  ctx=new (window.AudioContext||window.webkitAudioContext)();
+  ratio=ctx.sampleRate/SR;
+  const src=ctx.createMediaStreamSource(stream),sp=ctx.createScriptProcessor(4096,1,1),mute=ctx.createGain();mute.gain.value=0;
+  sp.onaudioprocess=e=>push(e.inputBuffer.getChannelData(0));
+  src.connect(sp);sp.connect(mute);mute.connect(ctx.destination);
+  $('setup').style.display='none';$('stage').style.display='block';resetWin();
+ }catch(e){
+  $('err').textContent=location!==parent.location&&e.name==='NotAllowedError'
+   ?'Le microphone est bloqué. Autorisez l’accès dans le navigateur ou ouvrez le lien dans un onglet à part.'
+   :'Impossible d’accéder au microphone ('+(e.name||'erreur')+'). Autorisez l’accès et réessayez.'}
+};
+</script>
+</body>
+</html>
